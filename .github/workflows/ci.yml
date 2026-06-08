@@ -1,0 +1,37 @@
+name: CI Python SDK
+
+on:
+  push:
+    paths:
+      - "sdks/python/**"
+      - ".github/workflows/ci.yml"
+  pull_request:
+    paths:
+      - "sdks/python/**"
+
+defaults:
+  run:
+    working-directory: sdks/python
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configurar Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Instalar o pacote com dependencias de dev
+        run: python -m pip install -e ".[dev]"
+
+      - name: Rodar testes unit e de webhook (sem rede)
+        env:
+          FLUVPAY_TEST_KEY: ${{ secrets.FLUVPAY_TEST_KEY }}
+        run: python -m pytest -q
